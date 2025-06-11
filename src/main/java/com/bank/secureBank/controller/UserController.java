@@ -19,13 +19,11 @@ public class UserController {
             return ResponseEntity.status(201).body(savedUser);
     }
 
-    @GetMapping("/{username}")
-    public ResponseEntity<User> getUser(@PathVariable String username) {
-        return userService.findByUsername(username)
-            .map(user -> {
-                user.setPassword(null);
-                return ResponseEntity.ok(user);
-            })
-            .orElse(ResponseEntity.notFound().build());
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody User loginRequest) {
+        return userService.findByUsername(loginRequest.getUsername())
+            .filter(user -> user.getPassword().equals(loginRequest.getPassword()))
+            .map(user -> ResponseEntity.ok("Login correcto"))
+            .orElse(ResponseEntity.status(401).body("Credenciales inválidas"));
     }
 }
