@@ -20,10 +20,19 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody User loginRequest) {
-        return userService.findByUsername(loginRequest.getUsername())
-            .filter(user -> user.getPassword().equals(loginRequest.getPassword()))
-            .map(user -> ResponseEntity.ok("Login correcto"))
-            .orElse(ResponseEntity.status(401).body("Credenciales inválidas"));
+    public ResponseEntity<?> login(@RequestBody User loginRequest) {
+        var userOptional = userService.findByUsername(loginRequest.getUsername());
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (user.getPassword().equals(loginRequest.getPassword())) {
+                user.setPassword(null); 
+                return ResponseEntity.ok(user);
+            } else {
+                return ResponseEntity.status(401).body("Credenciales inválidas");
+            }
+        } else {
+            return ResponseEntity.status(401).body("Credenciales inválidas");
+        }
     }
 }
