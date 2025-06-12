@@ -13,12 +13,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/register")
-        public ResponseEntity<User> registerUser(@RequestBody User user) {
-            User savedUser = userService.save(user);
-            return ResponseEntity.status(201).body(savedUser);
-    }
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User loginRequest) {
         var userOptional = userService.findByUsername(loginRequest.getUsername());
@@ -34,5 +28,17 @@ public class UserController {
         } else {
             return ResponseEntity.status(401).body("Credenciales inválidas");
         }
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@RequestBody User signupRequest) {
+        if (userService.findByUsername(signupRequest.getUsername()).isPresent()) {
+            return ResponseEntity.status(409).body("El nombre de usuario ya existe");
+        }
+
+        User newUser = userService.save(signupRequest);
+        newUser.setPassword(null);
+
+        return ResponseEntity.status(201).body(newUser);
     }
 }
