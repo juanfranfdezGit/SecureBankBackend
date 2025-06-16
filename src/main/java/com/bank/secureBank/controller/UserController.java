@@ -4,6 +4,7 @@ import com.bank.secureBank.model.User;
 import com.bank.secureBank.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.ResponseEntity;
 
 @RestController
@@ -13,13 +14,17 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User loginRequest) {
         var userOptional = userService.findByUsername(loginRequest.getUsername());
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            if (user.getPassword().equals(loginRequest.getPassword())) {
+
+        if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
                 user.setPassword(null); 
                 return ResponseEntity.ok(user);
             } else {
@@ -32,13 +37,11 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody User signupRequest) {
-        if (userService.findByUsername(signupRequest.getUsername()).isPresent()) {
-            return ResponseEntity.status(409).body("El nombre de usuario ya existe");
+        try {
+            User registeredUser = userService.register(signupRequest);
+            return ResponseEntity.status(201).body(registeredUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         }
-
-        User newUser = userService.save(signupRequest);
-        newUser.setPassword(null);
-
-        return ResponseEntity.status(201).body(newUser);
     }
 }
